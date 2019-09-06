@@ -13,6 +13,26 @@ TypescriptProtoLibraryAspect = provider(
     },
 )
 
+def _get_owner(target):
+    """
+    Make sure the target is valid. We need to make sure all sources in the proto
+    provided are 
+    1) Proto files.
+    2) From the same package (including workspace)
+    """
+    if len(target.proto.direct_sources) == 0:
+        return target.label
+
+    owner = target.proto.direct_sources[0].owner
+    for src in target.proto.direct_sources:
+        if src.extension != "proto":
+            fail("Input must be a proto file.")
+
+        if src.owner.package != owner.package:
+            fail("Inputs must all be in the same package.")
+
+    return owner
+
 def _proto_path(proto):
     """
     The proto path is not really a file path
@@ -54,7 +74,7 @@ def _build_protoc_command(target, ctx):
 
     protoc_command += " --plugin=protoc-gen-ts=%s" % (ctx.files._ts_protoc_gen[1].path)
 
-    protoc_output_dir = ctx.var["BINDIR"]
+    protoc_output_dir = ctx.bin_dir.path + "/" + _get_owner(target).workspace_root
     protoc_command += " --ts_out=service=grpc-web:%s" % (protoc_output_dir)
     protoc_command += " --js_out=import_style=commonjs,binary:%s" % (protoc_output_dir)
 
@@ -101,13 +121,13 @@ def _get_outputs(target, ctx):
         file_name = src.basename[:-len(src.extension) - 1]
         for f in ["_pb", "_pb_service"]:
             full_name = file_name + f
-            output = ctx.actions.declare_file(full_name + ".js")
+            output = ctx.actions.declare_file(full_name + ".js", sibling=src)
             js_outputs.append(output)
             output_es6 = ctx.actions.declare_file(full_name + ".closure.js")
             js_outputs_es6.append(output_es6)
 
         for f in ["_pb.d.ts", "_pb_service.d.ts"]:
-            output = ctx.actions.declare_file(file_name + f)
+            output = ctx.actions.declare_file(file_name + f, sibling=src)
             dts_outputs.append(output)
 
     return [js_outputs, js_outputs_es6, dts_outputs]
