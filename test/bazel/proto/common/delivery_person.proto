@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package test.bazel.proto;
 
+import "google/protobuf/timestamp.proto";
 import "test/bazel/proto/common/pizza.proto";
 
 message DeliveryPerson {
@@ -10,4 +11,7 @@ message DeliveryPerson {
 
   // The list of pizzas the delivery person has left to deliver.
   repeated Pizza pizzas = 2;
+
+  // Started on date for the pizza delivery person.
+  google.protobuf.Timestamp startedOn = 3;
 }
