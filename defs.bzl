@@ -123,7 +123,7 @@ def _get_outputs(target, ctx):
             full_name = file_name + f
             output = ctx.actions.declare_file(full_name + ".js", sibling=src)
             js_outputs.append(output)
-            output_es6 = ctx.actions.declare_file(full_name + ".closure.js")
+            output_es6 = ctx.actions.declare_file(full_name + ".mjs")
             js_outputs_es6.append(output_es6)
 
         for f in ["_pb.d.ts", "_pb_service.d.ts"]:
